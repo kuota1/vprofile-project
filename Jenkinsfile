@@ -21,47 +21,67 @@ pipeline {
     stages {
         stage('Create settings.xml') {
             steps {
-                writeFile file: 'settings.xml', text: """
+                script {
+                    writeFile file: 'settings.xml', text: """
 <settings>
   <servers>
     <server>
-      <id>${env.SNAP_REPO}</id>
-      <username>${env.NEXUS_USER}</username>
-      <password>${env.NEXUS_PASS}</password>
+      <id>${SNAP_REPO}</id>
+      <username>${NEXUS_USER}</username>
+      <password>${NEXUS_PASS}</password>
     </server>
     <server>
-      <id>${env.RELEASE_REPO}</id>
-      <username>${env.NEXUS_USER}</username>
-      <password>${env.NEXUS_PASS}</password>
+      <id>${RELEASE_REPO}</id>
+      <username>${NEXUS_USER}</username>
+      <password>${NEXUS_PASS}</password>
     </server>
     <server>
-      <id>${env.CENTRAL_REPO}</id>
-      <username>${env.NEXUS_USER}</username>
-      <password>${env.NEXUS_PASS}</password>
+      <id>${CENTRAL_REPO}</id>
+      <username>${NEXUS_USER}</username>
+      <password>${NEXUS_PASS}</password>
     </server>
     <server>
-      <id>${env.NEXUS_GRP_REPO}</id>
-      <username>${env.NEXUS_USER}</username>
-      <password>${env.NEXUS_PASS}</password>
+      <id>${NEXUS_GRP_REPO}</id>
+      <username>${NEXUS_USER}</username>
+      <password>${NEXUS_PASS}</password>
     </server>
   </servers>
 
   <mirrors>
     <mirror>
-      <id>${env.CENTRAL_REPO}</id>
-      <name>${env.CENTRAL_REPO}</name>
-      <url>http://${env.NEXUSIP}:${env.NEXUSPORT}/repository/${env.NEXUS_GRP_REPO}/</url>
+      <id>${CENTRAL_REPO}</id>
+      <name>${CENTRAL_REPO}</name>
+      <url>http://${NEXUSIP}:${NEXUSPORT}/repository/${NEXUS_GRP_REPO}/</url>
       <mirrorOf>*</mirrorOf>
     </mirror>
   </mirrors>
 </settings>
 """
+                }
             }
         }
 
         stage('Build') {
             steps {
                 sh 'mvn -s settings.xml -DskipTests install'
+            }
+            post {
+                success {
+                    echo "Now Archiving"
+                    archiveArtifacts artifacts: '**/*.war'
+                }
+            }
+        }
+
+        stage('Test') {
+            steps {
+                sh 'mvn test'
+            }
+        }
+
+        stage('Checkstyle Analysis') {
+            steps {
+                sh 'mvn checkstyle:checkstyle'
             }
         }
     }
