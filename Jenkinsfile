@@ -83,9 +83,10 @@ pipeline {
 
         stage('Checkstyle Analysis') {
             steps {
-                sh 'mvn -s settings.xml checkstyle:checkstyle' #-s settings.xml para mandar a nexus
+                sh 'mvn -s settings.xml checkstyle:checkstyle'
             }
         }
+
         stage('Sonar Analysis') {
             environment {
                 scannerHome = Tool "${SONARSCANNER}"
@@ -135,3 +136,5 @@ pipeline {
                 )
             }
         }
+    } 
+} 
