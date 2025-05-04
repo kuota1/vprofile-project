@@ -138,5 +138,14 @@ pipeline {
                 )
             }
         }
+        stage("Debug Nexus Upload") {
+    steps {
+        script {
+            echo "Uploading to: http://${NEXUSIP}:${NEXUSPORT}/repository/${RELEASE_REPO}"
+            echo "Artifact file exists: ${fileExists('target/vprofile-v2.war')}"
+        }
+    }
+}
+
     } 
 } 
