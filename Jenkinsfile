@@ -114,7 +114,7 @@ pipeline {
                     waitForQualityGate abortPipeline: true
                 }
             }
-        }
+        } */
         
 
         stage("UploadArtifact") {
@@ -137,6 +137,6 @@ pipeline {
                     ]
                 )
             }
-        }*/
+        }
     } 
 } 
