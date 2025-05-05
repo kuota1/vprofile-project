@@ -88,41 +88,32 @@ pipeline {
         }
 
         stage('Sonar Analysis') {
-    environment {
-        scannerHome = tool "${SONARSCANNER}"
-    }
-    steps {
-        withSonarQubeEnv("${SONARSERVER}") {
-            sh '''
-            ${scannerHome}/bin/sonar-scanner \
-            -Dsonar.projectKey=vprofile \
-            -Dsonar.projectName=vprofile \
-            -Dsonar.projectVersion=1.0 \
-            -Dsonar.sources=src \
-            -Dsonar.java.binaries=target/test-classes/com/visualpathit/account/controllerTest \
-            -Dsonar.junit.reportsPath=target/surefire-reports \
-            -Dsonar.jacoco.reportsPath=target/jacoco.exec \
-            -Dsonar.java.checkstyle.reportsPath=target/checkstyle-result.xml
-            '''
-        }
-    }
-}
-        /*
-        stage("Quality Gate") {
+            environment {
+                scannerHome = tool "${SONARSCANNER}"
+            }
             steps {
-                timeout(time: 1, unit: 'HOURS') {
-                    waitForQualityGate abortPipeline: true
+                withSonarQubeEnv("${SONARSERVER}") {
+                    sh '''
+                    ${scannerHome}/bin/sonar-scanner \
+                    -Dsonar.projectKey=vprofile \
+                    -Dsonar.projectName=vprofile \
+                    -Dsonar.projectVersion=1.0 \
+                    -Dsonar.sources=src \
+                    -Dsonar.java.binaries=target/test-classes/com/visualpathit/account/controllerTest \
+                    -Dsonar.junit.reportsPath=target/surefire-reports \
+                    -Dsonar.jacoco.reportsPath=target/jacoco.exec \
+                    -Dsonar.java.checkstyle.reportsPath=target/checkstyle-result.xml
+                    '''
                 }
             }
-        } */
-        
+        }
 
         stage("UploadArtifact") {
             steps {
                 nexusArtifactUploader(
                     nexusVersion: 'nexus3',
                     protocol: 'http',
-                    nexusUrl: "${NEXUSIP}:${NEXUSPORT}",
+                    nexusUrl: "http://${NEXUSIP}:${NEXUSPORT}",
                     groupId: 'QA',
                     version: "${env.BUILD_ID}-${env.BUILD_TIMESTAMP}",
                     repository: "${RELEASE_REPO}",
@@ -138,14 +129,31 @@ pipeline {
                 )
             }
         }
+
         stage("Debug Nexus Upload") {
-    steps {
-        script {
-            echo "Uploading to: http://${NEXUSIP}:${NEXUSPORT}/repository/${RELEASE_REPO}"
-            echo "Artifact file exists: ${fileExists('target/vprofile-v2.war')}"
+            steps {
+                script {
+                    echo "Uploading to: http://${NEXUSIP}:${NEXUSPORT}/repository/${RELEASE_REPO}"
+                    echo "Artifact file exists: ${fileExists('target/vprofile-v2.war')}"
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            sh """
+            curl -X POST -H 'Content-type: application/json' \
+            --data '{"text":"✅ Job exitoso: ${env.JOB_NAME} #${env.BUILD_NUMBER}"}' \
+            https://hooks.slack.com/services/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
+            """
+        }
+        failure {
+            sh """
+            curl -X POST -H 'Content-type: application/json' \
+            --data '{"text":"❌ Job fallido: ${env.JOB_NAME} #${env.BUILD_NUMBER}"}' \
+            https://hooks.slack.com/services/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
+            """
         }
     }
 }
-
-    } 
-} 
